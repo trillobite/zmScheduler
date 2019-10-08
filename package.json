@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "prod": "node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "request": "^2.88.0",
-    "request-cookies": "^1.1.0"
+    "promise": "^8.0.3",
+    "request": "^2.88.0"
   }
 }

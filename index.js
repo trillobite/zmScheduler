@@ -1,8 +1,6 @@
-const request = require("request");
-// const Cookie = require("request-cookies").Cookie;
-// const cookieJar = require("request-cookies").CookieJar;
+const request = require("request").defaults({ jar: true });
+const Promise = require("promise");
 const zmRoot = "http://192.168.100.57/zm/api";
-
 
 let now = new Date();
 
@@ -10,41 +8,83 @@ let now = new Date();
 // console.log(now.getDay());
 // console.log(now.getHours());
 
-let setMode = async (mode, camera) => {
-    try {
-        await request.post({
-            url: `${zmRoot}/host/login.json`, form: {
-                user: "admin",
-                pass: "BnCQd9*B7i"
+let setMode = async (setArr) => {
+
+    let login = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                request.post({
+                    url: `${zmRoot}/host/login.json`, form: {
+                        user: "apiUser",
+                        pass: "toggL3thew0rld!."
+                    }
+                }, (err, httpResponse, body) => {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(httpResponse.headers["set-cookie"]);
+                    }
+                });
+            } catch (e) {
+                console.log("error:", e);
+                reject(e);
             }
-        }, async (err, httpResponse, body) => {
-            // let rawcookies = httpResponse.headers["set-cookie"];
-            // rawcookies.map((raw) => {
-            //     let cookie = new Cookie(raw);
-            //     cookieJar.apply(cookie);
-            // })
-
-            console.log("COOKIES:", httpResponse.headers["set-cookie"]);
-
-            await request.post({
-                url: `${zmRoot}/monitors/${camera}.json`, form: {
-                    "Monitor[Function]": `${mode}`
-                }
-            }, (err, httpResponse, body) => {
-                console.log("cameraResponse:", body);
-            });
-
         });
+    };
 
+    //gets a list of cameras currently setup in zoneminder.
+    let cameraList = () => {
+        return new Promise((resolve, reject) => {
+            try {
+                request.get({
+                    url: `${zmRoot}/monitors.json`
+                }, (err, httpResponse, body) => {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(body);
+                    }
+                });
+            } catch (e) {
+                console.log("error:", e);
+                reject(e);
+            }
+        });
+    };
 
+    //sets the recording mode of a camera.
+    let setCamera = (mode, camera) => {
+        return new Promise((resolve, reject) => {
+            try {
+                request.post({
+                    url: `${zmRoot}/monitors/${camera}.json`, form: {
+                        "Monitor[Function]": `${mode}`
+                    }
+                }, (err, httpResponse, body) => {
+                    if(err) {
+                        reject(err);
+                    } else {
+                        resolve(body);
+                    }
+                });
+            } catch (e) {
+                console.log("error:", e);
+                reject(e);
+            }
+        });
+    };
 
-    } catch (e) {
-        console.log("Error:", e);
-        return false;
-    }
-
-    return true;
+    let cookies = await login(); //first we need to get the cookies, and store them into request jar.
+    let camArr = await cameraList();
+    console.log(camArr);
+    // setArr.map((cam) => {
+    //     try {
+    //         await setCamera(cam.mode, cam.camera);
+    //     } catch (e) {
+    //         console.log("error:", e);
+    //     }
+    // });
 };
 
-setMode("Mocord", 1);
+setMode([]);
 
