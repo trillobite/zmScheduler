@@ -16,27 +16,39 @@ let cameras = {
     ],
     //our nightclub hours.
     times: [
-        {
+        { //test day
             start: {
                 mode: "Mocord",
-                day: 6, //Friday
-                time: 23 //11PM
+                day: 2, //tuesday
+                time: 18 //6PM
             },
             end: {
                 mode: "Modect",
-                day: 7, //Saturday
+                day: 3, //wednesday.
                 time: 2 //2 AM
             }
         },
         {
             start: {
                 mode: "Mocord",
-                day: 1, //Sunday
+                day: 5, //Friday
                 time: 23 //11PM
             },
             end: {
                 mode: "Modect",
-                day: 2, //Monday
+                day: 6, //Saturday
+                time: 2 //2 AM
+            }
+        },
+        {
+            start: {
+                mode: "Mocord",
+                day: 0, //Sunday
+                time: 23 //11PM
+            },
+            end: {
+                mode: "Modect",
+                day: 1, //Monday
                 time: 2 //2 AM
             }
         }

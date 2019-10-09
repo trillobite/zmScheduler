@@ -94,41 +94,49 @@ let timeVerify = (times) => {
     // console.log(now.getDay());
     // console.log(now.getHours());
     times.map((time) => {
+        console.log(time.start.day, now.getDay());
         if (time.start.day == now.getDay()) {
+            console.log(time.start.time, now.getHours());
             if (time.start.time >= now.getHours()) {
-                return time.start;
+                return time.start; //is not returning it's value....
             }
-        } else if(time.end.day == now.getDay()) {
-            if(time.end.time >= now.getHours()) {
+        } else if (time.end.day == now.getDay()) {
+            if (time.end.time >= now.getHours()) {
                 return time.end;
             }
         }
         return false; //did not match anything...
-    })
+    });
 };
 
 let setMode = async () => {
 
     let cookies = await login(); //first we need to get the cookies, and store them into request jar.
     console.log(cookies);
-    let camArr = await cameraList();
-    console.log(camArr);
 
-    config.cameras.list.map((cam) => {
-        try {
-            //time mode which matched from config.
-            let def = timeVerify(config.cameras.times);
-            if(def) { //anything but false.
-                let camMode = getCamStatus(cam).Function;
-                if(camMode != def.mode) {
-                    setCamera(def.mode); //set the camera to the correct mode.
+    login().done(() => {
+
+        config.cameras.list.map(async (cam) => {
+            console.log(cam);
+            try {
+                //time mode which matched from config.
+                let def = timeVerify(config.cameras.times);
+                if (def) { //anything but false.
+                    console.log("match!", cam, def);
+                    let camMode = getCamStatus(cam).Function;
+                    if (camMode != def.mode) {
+                        console.log("Changing Status...", camMode);
+                        await setCamera(def.mode); //set the camera to the correct mode.
+                    }
                 }
-            }
 
-        } catch (e) {
-            console.log("error:", e);
-        }
+            } catch (e) {
+                console.log("error:", e);
+            }
+        });
+
     });
+
 };
 
 setMode();
