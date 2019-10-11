@@ -25,7 +25,7 @@ let cameras = {
             end: {
                 mode: "Modect",
                 day: 4, //friday
-                time: 19 //2 AM
+                time: 2 //2 AM
             }
         },
         {
