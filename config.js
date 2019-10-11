@@ -19,13 +19,13 @@ let cameras = {
         { //test day
             start: {
                 mode: "Mocord",
-                day: 2, //tuesday
-                time: 18 //6PM
+                day: 4, //thursday
+                time: 14 //2PM
             },
             end: {
                 mode: "Modect",
-                day: 3, //wednesday.
-                time: 2 //2 AM
+                day: 4, //friday
+                time: 19 //2 AM
             }
         },
         {

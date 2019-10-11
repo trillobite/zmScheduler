@@ -29,15 +29,17 @@ let login = () => {
 
 //gets a list of cameras currently setup in zoneminder.
 let cameraList = () => {
+    console.log("getting camera list...");
     return new Promise((resolve, reject) => {
         try {
             request.get({
                 url: `${zmRoot}/monitors.json`
             }, (err, httpResponse, body) => {
                 if (err) {
+                    console.log("Cannot get camera list:", err);
                     reject(err);
                 } else {
-                    resolve(body);
+                    resolve(JSON.parse(body));
                 }
             });
         } catch (e) {
@@ -49,6 +51,7 @@ let cameraList = () => {
 
 //sets the recording mode of a camera.
 let setCamera = (mode, camera) => {
+    console.log("setting camera...", camera, "to...", mode);
     return new Promise((resolve, reject) => {
         try {
             request.post({
@@ -59,7 +62,7 @@ let setCamera = (mode, camera) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(body);
+                    resolve(JSON.parse(body));
                 }
             });
         } catch (e) {
@@ -72,9 +75,14 @@ let setCamera = (mode, camera) => {
 let getCamStatus = (name) => {
     return new Promise((resolve, reject) => {
         try {
+            console.log("getting camera status...");
             cameraList().done((list) => {
-                list.map((cam) => {
+                //console.log(list.monitors[0]);
+                list.monitors.map((cam, index) => {
+                    //console.log("cam:", cam);
                     if (cam.Monitor.Name == name) {
+                        console.log("cam: ", cam.Monitor.Name);
+                        cam.Monitor.index = index;
                         resolve(cam.Monitor);
                     }
                 });
@@ -87,53 +95,80 @@ let getCamStatus = (name) => {
 };
 
 let timeVerify = (times) => {
-
     let now = new Date();
 
-    // console.log(now.getDate());
-    // console.log(now.getDay());
-    // console.log(now.getHours());
-    times.map((time) => {
-        console.log(time.start.day, now.getDay());
+    for (let i = 0; i < times.length; ++i) {
+        let time = times[i];
+
+        console.log("day:", time.start.day, now.getDay());
         if (time.start.day == now.getDay()) {
-            console.log(time.start.time, now.getHours());
-            if (time.start.time >= now.getHours()) {
-                return time.start; //is not returning it's value....
+            console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
+            if (now.getHours() >= time.start.time) {
+                console.log("time:", time.start);
+                return time.start;
             }
         } else if (time.end.day == now.getDay()) {
+            console.log("end time:", time.end.time, now.getHours(), time.end.time >= now.getHours());
             if (time.end.time >= now.getHours()) {
+                console.log("time:", time.end);
                 return time.end;
             }
         }
         return false; //did not match anything...
-    });
+    }
 };
 
-let setMode = async () => {
+let setMode = () => {
 
-    let cookies = await login(); //first we need to get the cookies, and store them into request jar.
-    console.log(cookies);
+    login().done((cookies) => {
+        console.log("here's your cookies!", cookies);
 
-    login().done(() => {
+        let indx = 0;
 
-        config.cameras.list.map(async (cam) => {
+        let recFunc = (cam) => {
             console.log(cam);
             try {
                 //time mode which matched from config.
                 let def = timeVerify(config.cameras.times);
                 if (def) { //anything but false.
                     console.log("match!", cam, def);
-                    let camMode = getCamStatus(cam).Function;
-                    if (camMode != def.mode) {
-                        console.log("Changing Status...", camMode);
-                        await setCamera(def.mode); //set the camera to the correct mode.
-                    }
+                    //console.log(await getCamStatus(cam));
+                    getCamStatus(cam).done((currStatus) => {
+                        let camMode = currStatus.Function;
+                        let index = currStatus.index;
+
+                        console.log("modes:", camMode, "vs", def.mode);
+                        if (camMode != def.mode) {
+                            console.log("Changing Status to...", def.mode);
+                            setCamera(def.mode, index).done((result) => {
+                                console.log("Set camera result:", result);
+                                rec(); //call rec to get the next object.
+                            });
+                        } else {
+                            console.log("Recording option already set.");
+                            rec();
+                        }
+                    });
                 }
 
             } catch (e) {
                 console.log("error:", e);
             }
-        });
+        }
+
+        //were calling this to make a recursive loop...
+        let rec = () => {
+            if (indx + 1 > config.cameras.list.length) {
+                return;
+            } else {
+                let obj = config.cameras.list[indx];
+                ++indx;
+                recFunc(obj);
+            }
+        };
+
+        //lets start the loop.
+        rec();
 
     });
 
