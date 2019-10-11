@@ -1,6 +1,10 @@
 # zmScheduler
 Allows zoneminder cameras to be toggled depending on date and time.
 
+### Dev Notes
+- No releases made yet, some cameras still don't change their modes.
+- Code is ALPHA not ready for production.
+
 ### Requirements
 To run, config.js will be required, it's format is as follows:
 
