@@ -43,12 +43,12 @@ let cameras = {
         {
             start: {
                 mode: "Mocord",
-                day: 0, //Sunday
+                day: 6, //Saturday
                 time: 23 //11PM
             },
             end: {
                 mode: "Modect",
-                day: 1, //Monday
+                day: 0, //Sunday
                 time: 2 //2 AM
             }
         }
