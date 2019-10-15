@@ -62,3 +62,6 @@ typings/
 
 # we don't want the config file to expose our passwords.
 config.js
+
+# we don't need to commit the package-lock
+package-lock.json
