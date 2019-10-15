@@ -1,7 +1,7 @@
 //cookies are enabled in request.
 const cron = require("node-cron");
-const qs = require("qs");
-const assert = require("assert");
+// const qs = require("qs");
+// const assert = require("assert");
 const config = require("./config");
 const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
@@ -58,11 +58,11 @@ let setCamera = (mode, camera) => {
     return new Promise((resolve, reject) => {
         try {
 
-            let formObj = assert.deepEqual(qs.parse(`Monitor[Function]=${mode}`), {
-                Monitor: {
-                    Function: mode
-                }
-            });
+            // let formObj = assert.deepEqual(qs.parse(`Monitor[Function]=${mode}`), {
+            //     Monitor: {
+            //         Function: mode
+            //     }
+            // });
             request.post({
                 url: `${zmRoot}/monitors/${camera}.json`, 
                 //encodeURIComponent(JSON.stringify({"test1":"val1","test2":"val2"}))+"<div>");
