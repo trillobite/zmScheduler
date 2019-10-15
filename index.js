@@ -1,4 +1,5 @@
 //cookies are enabled in request.
+const cron = require("node-cron");
 const config = require("./config");
 const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
@@ -149,6 +150,8 @@ let setMode = () => {
                             rec();
                         }
                     });
+                } else {
+                    console.log("Did not pass time validation, will try again later.");
                 }
 
             } catch (e) {
@@ -174,5 +177,10 @@ let setMode = () => {
 
 };
 
-setMode();
+//currently running every minute for testing purposes.
+//run every hour Fri, Sat, & Sun for nightclub.
+cron.schedule("* */1 * * 5-7", () => {
+    console.log("zmScheduler is running...");
+    setMode();
+});
 

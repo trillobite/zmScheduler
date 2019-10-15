@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "node-cron": "^2.0.3",
     "promise": "^8.0.3",
     "request": "^2.88.0"
   }
