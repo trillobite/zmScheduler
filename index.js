@@ -1,5 +1,7 @@
 //cookies are enabled in request.
 const cron = require("node-cron");
+const qs = require("qs");
+const assert = require("assert");
 const config = require("./config");
 const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
@@ -55,10 +57,29 @@ let setCamera = (mode, camera) => {
     console.log("setting camera...", camera, "to...", mode);
     return new Promise((resolve, reject) => {
         try {
-            request.post({
-                url: `${zmRoot}/monitors/${camera}.json`, form: {
-                    "Monitor[Function]": `${mode}`
+
+            let formObj = assert.deepEqual(qs.parse(`Monitor[Function]=${mode}`), {
+                Monitor: {
+                    Function: mode
                 }
+            });
+            request.post({
+                url: `${zmRoot}/monitors/${camera}.json`, 
+                //encodeURIComponent(JSON.stringify({"test1":"val1","test2":"val2"}))+"<div>");
+                // form: encodeURIComponent(JSON.stringify({
+                //     Monitor: {
+                //         Function: mode
+                //     }
+                // })) + "<div>",
+                //form: `Monitor[Function]=${mode}&Monitor[Enabled]=1`,
+                form: {
+                    Monitor: {
+                        Function: mode,
+                    }
+                }
+                // form: {
+                //     "Monitor[Function]": `${mode}`
+                // }
             }, (err, httpResponse, body) => {
                 if (err) {
                     reject(err);
@@ -143,7 +164,9 @@ let setMode = () => {
                             console.log("Changing Status to...", def.mode);
                             setCamera(def.mode, index).done((result) => {
                                 console.log("Set camera result:", result);
-                                rec(); //call rec to get the next object.
+                                setTimeout(() => {
+                                    rec(); //call rec to get the next object.
+                                }, 5000); //wait for 5 seconds, so zoneminder will have time to respond.
                             });
                         } else {
                             console.log("Recording option already set.");
@@ -177,10 +200,14 @@ let setMode = () => {
 
 };
 
+//comment out for prod.
+setMode();
+
 //currently running every minute for testing purposes.
 //run every hour Fri, Sat, & Sun for nightclub.
-cron.schedule("* */1 * * 5-7", () => {
-    console.log("zmScheduler is running...");
-    setMode();
-});
+//UNCOMMENT BELOW FOR PROD!!!!!:
+// cron.schedule("* */1 * * 5-7", () => {
+//     console.log("zmScheduler is running...");
+//     setMode();
+// });
 
