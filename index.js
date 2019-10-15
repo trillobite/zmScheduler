@@ -63,15 +63,27 @@ let setCamera = (mode, camera) => {
             //         Function: mode
             //     }
             // });
+            console.log("Command:", `Monitor[Function]=${mode}&Monitor[Enabled]=1`);
+            // request.post(`${zmRoot}/monitors/${camera}.json`, `Monitor[Function]=${mode}&Monitor[Enabled]=1`)
+            //     .on('response', (response) => {
+            //         resolve(JSON.parse(response))
+            //     })
+            //     .on("error", (err) => {
+            //         console.log("error", err);
+            //         reject(err);
+            //     });
             request.post({
-                url: `${zmRoot}/monitors/${camera}.json`, 
+                url: `${zmRoot}/monitors/${camera}.json`,
+                headers: {
+                    "content-type": "x-www-form-urlencoded",
+                },
                 //encodeURIComponent(JSON.stringify({"test1":"val1","test2":"val2"}))+"<div>");
                 // form: encodeURIComponent(JSON.stringify({
                 //     Monitor: {
                 //         Function: mode
                 //     }
                 // })) + "<div>",
-                //form: `Monitor[Function]=${mode}&Monitor[Enabled]=1`,
+                // form: `Monitor[Function]=${mode}&Monitor[Enabled]=1`,
                 form: {
                     Monitor: {
                         Function: mode,
