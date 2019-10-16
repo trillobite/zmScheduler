@@ -7,6 +7,7 @@ const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
 const zmRoot = config.url;
 
+let defaultsSet = false;
 
 let login = () => {
     return new Promise((resolve, reject) => {
@@ -57,41 +58,17 @@ let setCamera = (mode, camera) => {
     console.log("setting camera...", camera, "to...", mode);
     return new Promise((resolve, reject) => {
         try {
-
-            // let formObj = assert.deepEqual(qs.parse(`Monitor[Function]=${mode}`), {
-            //     Monitor: {
-            //         Function: mode
-            //     }
-            // });
             console.log("Command:", `Monitor[Function]=${mode}&Monitor[Enabled]=1`);
-            // request.post(`${zmRoot}/monitors/${camera}.json`, `Monitor[Function]=${mode}&Monitor[Enabled]=1`)
-            //     .on('response', (response) => {
-            //         resolve(JSON.parse(response))
-            //     })
-            //     .on("error", (err) => {
-            //         console.log("error", err);
-            //         reject(err);
-            //     });
             request.post({
                 url: `${zmRoot}/monitors/${camera}.json`,
-                headers: {
+                headers: { //might not be required, supposed to be set automatically.
                     "content-type": "x-www-form-urlencoded",
                 },
-                //encodeURIComponent(JSON.stringify({"test1":"val1","test2":"val2"}))+"<div>");
-                // form: encodeURIComponent(JSON.stringify({
-                //     Monitor: {
-                //         Function: mode
-                //     }
-                // })) + "<div>",
-                // form: `Monitor[Function]=${mode}&Monitor[Enabled]=1`,
                 form: {
                     Monitor: {
                         Function: mode,
                     }
                 }
-                // form: {
-                //     "Monitor[Function]": `${mode}`
-                // }
             }, (err, httpResponse, body) => {
                 if (err) {
                     reject(err);
@@ -116,7 +93,7 @@ let getCamStatus = (name) => {
                     //console.log("cam:", cam);
                     if (cam.Monitor.Name == name) {
                         console.log("cam: ", cam.Monitor.Name);
-                        cam.Monitor.index = index;
+                        cam.Monitor.index = index + 1;
                         resolve(cam.Monitor);
                     }
                 });
@@ -150,6 +127,67 @@ let timeVerify = (times) => {
         }
         return false; //did not match anything...
     }
+};
+
+
+
+let setDefaults = () => {
+    return new Promise((resolve, reject) => {
+        login().done((cookies) => {
+            console.log("First startup... checking camera defaults...");
+            let indx = 0;
+
+            //if we are in a valid time range... don't set defaults
+            let def = timeVerify(config.cameras.times);
+            if(def) {
+                console.log(def);
+                resolve(def); //we don't need to do anything here.
+                return;
+            }
+
+            let recFunc = (cam) => {
+                console.log("Checking:", cam);
+                try {
+                    getCamStatus(cam).done((currStatus) => {
+                        let camMode = currStatus.Function;
+                        let index = currStatus.index;
+
+                        console.log("modes:", camMode, "vs", def.mode);
+                        if (camMode != def.mode) {
+                            console.log("Changing Status to...", def.mode);
+                            setCamera(def.mode, index).done((result) => {
+                                console.log("Set camera result:", result);
+                                setTimeout(() => {
+                                    rec(); //call rec to get the next object.
+                                }, 5000); //wait for 5 seconds, so zoneminder will have time to respond.
+                            });
+                        } else {
+                            console.log("Recording option already set.");
+                            rec();
+                        }
+                    });
+                } catch (e) {
+                    console.log("error:", e);
+                    reject("failsed to set defaults on cameras:", e);
+                }
+            }
+
+            //were calling this to make a recursive loop...
+            let rec = () => {
+                if (indx + 1 > config.cameras.list.length) {
+                    resolve(indx);
+                    return;
+                } else {
+                    let obj = config.cameras.list[indx];
+                    ++indx;
+                    recFunc(obj);
+                }
+            };
+
+            //lets start the loop.
+            rec();
+        });
+    });
 };
 
 let setMode = () => {
@@ -213,13 +251,19 @@ let setMode = () => {
 };
 
 //comment out for prod.
-setMode();
+if (config.state == "dev") {
+    //defaults are set on cameras for just in case code is re-run during nightclub hours.
+    setDefaults();
+    setMode();
+}
 
-//currently running every minute for testing purposes.
-//run every hour Fri, Sat, & Sun for nightclub.
-//UNCOMMENT BELOW FOR PROD!!!!!:
-// cron.schedule("* */1 * * 5-7", () => {
-//     console.log("zmScheduler is running...");
-//     setMode();
-// });
-
+if (config.state == "prod" || config.state == "stage") {
+    //set the defaults on the cameras before we start.
+    setDefaults();
+    //currently running every minute for testing purposes.
+    //run every hour Fri, Sat, & Sun for nightclub.
+    cron.schedule("* */1 * * 5-7", () => {
+        console.log("zmScheduler is running...");
+        setMode();
+    });
+}
