@@ -1,7 +1,5 @@
 //cookies are enabled in request.
 const cron = require("node-cron");
-// const qs = require("qs");
-// const assert = require("assert");
 const config = require("./config");
 const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
@@ -153,7 +151,7 @@ let set = (setMode, camList) => {
                                 console.log("Set camera result:", result);
                             }
 
-                            if (result !== { message: "Saved" }) {
+                            if (result != { message: "Saved" }) {
                                 console.log("Unexpected Result:", result);
                             }
 
@@ -206,7 +204,10 @@ let setDefaults = () => {
             //if we are in a valid time range... don't set defaults
             let def = timeVerify(config.cameras.times);
             if (def) {
-                console.log(def);
+                if(config.state == "dev" || config.state == "stage") {
+                    console.log(def);
+                    console.log("skipping defaults...");
+                }
                 resolve(def); //we don't need to do anything here.
                 return;
             }
