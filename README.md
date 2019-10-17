@@ -2,8 +2,8 @@
 Allows zoneminder cameras to be toggled depending on date and time.
 
 #### Dev Notes
-- No release made yet, some cameras still don't change their modes.
-- Code is ALPHA not ready for production.
+- To download click on Releases near the top.
+- Code is BETA, ready for testing.
 
 #### Requirements
 To run, create the config.js next to index.js, it's format is as follows:
@@ -69,4 +69,10 @@ module.exports = {
     url: "http://192.168.100.57/zm/api",
     cameras: cameras,
 }
+```
+
+####RUN:
+```
+npm run dev //runs with nodemon
+npm run prod //runs without nodemon (recommended).
 ```
