@@ -64,7 +64,7 @@ let cameras = {
 }
 
 module.exports = {
-    state: state(0), //0 is dev.
+    state: state(1), //0 is dev.
     login: login,
     url: "http://192.168.100.57/zm/api",
     cameras: cameras,

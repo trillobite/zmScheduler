@@ -31,7 +31,11 @@ let login = () => {
 
 //gets a list of cameras currently setup in zoneminder.
 let cameraList = () => {
-    console.log("getting camera list...");
+
+    if (config.state == "dev" || config.state == "stage") {
+        console.log("getting camera list...");
+    }
+
     return new Promise((resolve, reject) => {
         try {
             request.get({
@@ -56,7 +60,11 @@ let setCamera = (mode, camera) => {
     console.log("setting camera...", camera, "to...", mode);
     return new Promise((resolve, reject) => {
         try {
-            console.log("Command:", `Monitor[Function]=${mode}&Monitor[Enabled]=1`);
+
+            if (config.state == "dev" || config.state == "stage") {
+                console.log("Command:", `Monitor[Function]=${mode}&Monitor[Enabled]=1`);
+            }
+
             request.post({
                 url: `${zmRoot}/monitors/${camera}.json`,
                 headers: { //might not be required, supposed to be set automatically.
@@ -84,13 +92,21 @@ let setCamera = (mode, camera) => {
 let getCamStatus = (name) => {
     return new Promise((resolve, reject) => {
         try {
-            console.log("getting camera status...");
+
+            if (config.state == "dev" || config.state == "stage") {
+                console.log("getting camera status...");
+            }
+
             cameraList().done((list) => {
                 //console.log(list.monitors[0]);
                 list.monitors.map((cam, index) => {
                     //console.log("cam:", cam);
                     if (cam.Monitor.Name == name) {
-                        console.log("cam: ", cam.Monitor.Name);
+
+                        if (config.state == "dev" || config.state == "stage") {
+                            console.log("cam: ", cam.Monitor.Name);
+                        }
+
                         cam.Monitor.index = index + 1;
                         resolve(cam.Monitor);
                     }
@@ -109,17 +125,36 @@ let timeVerify = (times) => {
     for (let i = 0; i < times.length; ++i) {
         let time = times[i];
 
-        console.log("day:", time.start.day, now.getDay());
+        if (config.state == "dev" || config.state == "stage") {
+            console.log("day:", time.start.day, now.getDay());
+        }
+
         if (time.start.day == now.getDay()) {
-            console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
+
+            if (config.state == "dev" || config.state == "stage") {
+                console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
+            }
+
             if (now.getHours() >= time.start.time) {
-                console.log("time:", time.start);
+
+                if (config.state == "dev" || config.state == "stage") {
+                    console.log("time:", time.start);
+                }
+
                 return time.start;
             }
         } else if (time.end.day == now.getDay()) {
-            console.log("end time:", time.end.time, now.getHours(), time.end.time >= now.getHours());
+
+            if (config.state == "dev" || config.state == "stage") {
+                console.log("end time:", time.end.time, now.getHours(), time.end.time >= now.getHours());
+            }
+
             if (time.end.time >= now.getHours()) {
-                console.log("time:", time.end);
+
+                if (config.state == "dev" || config.state == "stage") {
+                    console.log("time:", time.end);
+                }
+
                 return time.end;
             }
         }
@@ -139,7 +174,10 @@ let set = (setMode, camList) => {
                     let camMode = currStatus.Function;
                     let index = currStatus.index;
 
-                    console.log("modes:", camMode, "vs", setMode);
+                    if (config.state == "dev" || config.state == "stage") {
+                        console.log("modes:", camMode, "vs", setMode);
+                    }
+
                     if (camMode != setMode) {
 
                         if (config.state == "dev") {
