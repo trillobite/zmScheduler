@@ -129,115 +129,59 @@ let timeVerify = (times) => {
     }
 };
 
-
-
-let setDefaults = () => {
+let set = (setMode, camList) => {
     return new Promise((resolve, reject) => {
-        login().done((cookies) => {
-            console.log("First startup... checking camera defaults...");
-            let indx = 0;
-
-            //if we are in a valid time range... don't set defaults
-            let def = timeVerify(config.cameras.times);
-            if(def) {
-                console.log(def);
-                resolve(def); //we don't need to do anything here.
-                return;
-            }
-
-            let recFunc = (cam) => {
-                console.log("Checking:", cam);
-                try {
-                    getCamStatus(cam).done((currStatus) => {
-                        let camMode = currStatus.Function;
-                        let index = currStatus.index;
-
-                        console.log("modes:", camMode, "vs", def.mode);
-                        if (camMode != def.mode) {
-                            console.log("Changing Status to...", def.mode);
-                            setCamera(def.mode, index).done((result) => {
-                                console.log("Set camera result:", result);
-                                setTimeout(() => {
-                                    rec(); //call rec to get the next object.
-                                }, 5000); //wait for 5 seconds, so zoneminder will have time to respond.
-                            });
-                        } else {
-                            console.log("Recording option already set.");
-                            rec();
-                        }
-                    });
-                } catch (e) {
-                    console.log("error:", e);
-                    reject("failsed to set defaults on cameras:", e);
-                }
-            }
-
-            //were calling this to make a recursive loop...
-            let rec = () => {
-                if (indx + 1 > config.cameras.list.length) {
-                    resolve(indx);
-                    return;
-                } else {
-                    let obj = config.cameras.list[indx];
-                    ++indx;
-                    recFunc(obj);
-                }
-            };
-
-            //lets start the loop.
-            rec();
-        });
-    });
-};
-
-let setMode = () => {
-
-    login().done((cookies) => {
-        console.log("here's your cookies!", cookies);
 
         let indx = 0;
 
         let recFunc = (cam) => {
-            console.log(cam);
+            console.log("Checking:", cam);
             try {
-                //time mode which matched from config.
-                let def = timeVerify(config.cameras.times);
-                if (def) { //anything but false.
-                    console.log("match!", cam, def);
-                    //console.log(await getCamStatus(cam));
-                    getCamStatus(cam).done((currStatus) => {
-                        let camMode = currStatus.Function;
-                        let index = currStatus.index;
+                getCamStatus(cam).done((currStatus) => {
+                    let camMode = currStatus.Function;
+                    let index = currStatus.index;
 
-                        console.log("modes:", camMode, "vs", def.mode);
-                        if (camMode != def.mode) {
-                            console.log("Changing Status to...", def.mode);
-                            setCamera(def.mode, index).done((result) => {
-                                console.log("Set camera result:", result);
-                                setTimeout(() => {
-                                    rec(); //call rec to get the next object.
-                                }, 5000); //wait for 5 seconds, so zoneminder will have time to respond.
-                            });
-                        } else {
-                            console.log("Recording option already set.");
-                            rec();
+                    console.log("modes:", camMode, "vs", setMode);
+                    if (camMode != setMode) {
+
+                        if (config.state == "dev") {
+                            console.log("Changing Status to...", setMode);
                         }
-                    });
-                } else {
-                    console.log("Did not pass time validation, will try again later.");
-                }
 
+                        setCamera(setMode, index).done((result) => {
+                            if (config.state == "dev" || config.state == "stage") {
+                                console.log("Set camera result:", result);
+                            }
+
+                            if (result !== { message: "Saved" }) {
+                                console.log("Unexpected Result:", result);
+                            }
+
+                            setTimeout(() => {
+                                rec(); //call rec to get the next object.
+                            }, 5000); //wait for 5 seconds, so zoneminder will have time to respond.
+                        });
+                    } else {
+                        if (config.state == "dev" || config.state == "stage") {
+                            console.log("Recording option already set for:", cam);
+                        }
+
+                        rec();
+                    }
+                });
             } catch (e) {
                 console.log("error:", e);
+                reject("failed to set defaults on cameras:", e);
             }
         }
 
         //were calling this to make a recursive loop...
         let rec = () => {
-            if (indx + 1 > config.cameras.list.length) {
+            if (indx + 1 > camList.length) {
+                resolve(indx);
                 return;
             } else {
-                let obj = config.cameras.list[indx];
+                let obj = camList[indx];
                 ++indx;
                 recFunc(obj);
             }
@@ -245,25 +189,74 @@ let setMode = () => {
 
         //lets start the loop.
         rec();
+    });
+
+};
+
+let setDefaults = () => {
+    return new Promise((resolve, reject) => {
+        login().done((cookies) => {
+
+            if (config.state == "dev" || config.state == "stage") {
+                console.log("here's your cookies!", cookies);
+            }
+
+            console.log("First startup... checking camera defaults...");
+
+            //if we are in a valid time range... don't set defaults
+            let def = timeVerify(config.cameras.times);
+            if (def) {
+                console.log(def);
+                resolve(def); //we don't need to do anything here.
+                return;
+            }
+            set(config.cameras.default.mode, config.cameras.list).done((returned) => {
+                resolve(returned);
+            });
+        });
+    });
+};
+
+let setMode = () => {
+
+    login().done((cookies) => {
+        if (config.state == "dev" || config.state == "stage") {
+            console.log("here's your cookies!", cookies);
+        }
+
+        let def = timeVerify(config.cameras.times);
+        if (def) {
+            set(def.mode, config.cameras.list).done((result) => {
+                if (config.state == "dev") {
+                    console.log("result:", result);
+                }
+            });
+        } else {
+            console.log("Nothing to do yet, will try again later.", Date());
+        }
 
     });
 
 };
 
+console.log("running in:", config.state, "mode");
+
 //comment out for prod.
 if (config.state == "dev") {
-    //defaults are set on cameras for just in case code is re-run during nightclub hours.
-    setDefaults();
-    setMode();
+    setDefaults().done(() => {
+        setMode();
+    });
 }
 
 if (config.state == "prod" || config.state == "stage") {
-    //set the defaults on the cameras before we start.
-    setDefaults();
-    //currently running every minute for testing purposes.
-    //run every hour Fri, Sat, & Sun for nightclub.
-    cron.schedule("* */1 * * 5-7", () => {
-        console.log("zmScheduler is running...");
-        setMode();
+    //defaults are set on first run.
+    setDefaults().done(() => {
+
+        //currently running every minute for testing purposes.
+        //run every hour Fri, Sat, & Sun for nightclub.
+        cron.schedule("* */1 * * 5-7", () => {
+            console.log("zmScheduler is running...");
+            setMode();
+        });
     });
 }

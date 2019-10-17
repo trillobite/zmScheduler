@@ -6,18 +6,22 @@ Allows zoneminder cameras to be toggled depending on date and time.
 - Code is ALPHA not ready for production.
 
 #### Requirements
-To run, config.js will be required, it's format is as follows:
+To run, create the config.js next to index.js, it's format is as follows:
 
 ``` javascript
 let login = {
     username: "user",
-    password: "pass",
+    password: "pass"
+};
+
+let state = (mode) => {
+    let modes = ["dev", "stage", "prod"];
+    return modes[mode];
 };
 
 let cameras = {
     list: [
         "downstairs bar",
-        "downstairs dining",
         "back bar",
         "back bar stage",
         "North 1",
@@ -25,20 +29,13 @@ let cameras = {
         "balcony",
         "main bar",
     ],
+
+    default: {
+        mode: "Modect"
+    },
+
     //our nightclub hours.
     times: [
-        { //test day
-            start: {
-                mode: "Mocord",
-                day: 4, //thursday
-                time: 14 //2PM
-            },
-            end: {
-                mode: "Modect",
-                day: 4, //friday
-                time: 2 //2 AM
-            }
-        },
         {
             start: {
                 mode: "Mocord",
@@ -67,6 +64,7 @@ let cameras = {
 }
 
 module.exports = {
+    state: state(0), //0 is dev.
     login: login,
     url: "http://192.168.100.57/zm/api",
     cameras: cameras,
