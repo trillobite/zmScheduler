@@ -71,7 +71,7 @@ module.exports = {
 }
 ```
 
-####RUN:
+#### RUN:
 ```
 npm run dev //runs with nodemon
 npm run prod //runs without nodemon (recommended).
