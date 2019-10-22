@@ -5,8 +5,6 @@ const request = require("request").defaults({ jar: true });
 const Promise = require("promise");
 const zmRoot = config.url;
 
-let defaultsSet = false;
-
 let login = () => {
     return new Promise((resolve, reject) => {
         try {
@@ -122,16 +120,24 @@ let getCamStatus = (name) => {
 let timeVerify = (times) => {
     let now = new Date();
 
+    let chk = (day) => {
+        return day == now.getDay() ? true : false;
+    };
+
     for (let i = 0; i < times.length; ++i) {
         let time = times[i];
 
+        let todayStart = chk(time.start.day);
+        let todayEnd = chk(time.end.day);
+
         if (config.state == "dev" || config.state == "stage") {
-            console.log("day:", time.start.day, now.getDay());
+            console.log("Is start and end same day?", todayStart && todayEnd ? true : false);
         }
 
-        if (time.start.day == now.getDay()) {
+        if (todayStart && !todayEnd) {
 
             if (config.state == "dev" || config.state == "stage") {
+                console.log("SCHEDULE START");
                 console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
             }
 
@@ -143,9 +149,10 @@ let timeVerify = (times) => {
 
                 return time.start;
             }
-        } else if (time.end.day == now.getDay()) {
+        } else if (todayEnd) {
 
             if (config.state == "dev" || config.state == "stage") {
+                console.log("SCHEDULE END");
                 console.log("end time:", time.end.time, now.getHours(), time.end.time >= now.getHours());
             }
 
@@ -158,8 +165,8 @@ let timeVerify = (times) => {
                 return time.end;
             }
         }
-        return false; //did not match anything...
     }
+    return false; //did not match anything...
 };
 
 let set = (setMode, camList) => {
@@ -242,16 +249,16 @@ let setDefaults = () => {
             //if we are in a valid time range... don't set defaults
             let def = timeVerify(config.cameras.times);
             if (def) {
-                if(config.state == "dev" || config.state == "stage") {
+                if (config.state == "dev" || config.state == "stage") {
                     console.log(def);
                     console.log("skipping defaults...");
                 }
                 resolve(def); //we don't need to do anything here.
-                return;
+            } else {
+                set(config.cameras.default.mode, config.cameras.list).done((returned) => {
+                    resolve(returned);
+                });
             }
-            set(config.cameras.default.mode, config.cameras.list).done((returned) => {
-                resolve(returned);
-            });
         });
     });
 };
@@ -282,14 +289,23 @@ console.log("running in:", config.state, "mode");
 
 //comment out for prod.
 if (config.state == "dev") {
-    setDefaults().done(() => {
+    setDefaults().done((def) => {
+
+        if (config.state == "prod" || config.state == "stage") {
+            console.log("starting up with state:", def);
+        }
+
         setMode();
     });
 }
 
 if (config.state == "prod" || config.state == "stage") {
     //defaults are set on first run.
-    setDefaults().done(() => {
+    setDefaults().done((def) => {
+
+        if (config.state == "prod" || config.state == "stage") {
+            console.log("starting up with state:", def);
+        }
 
         //currently running every minute for testing purposes.
         //run every hour Fri, Sat, & Sun for nightclub.
