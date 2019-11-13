@@ -153,10 +153,10 @@ let timeVerify = (times) => {
 
             if (config.state == "dev" || config.state == "stage") {
                 console.log("SCHEDULE END");
-                console.log("end time:", time.end.time, now.getHours(), time.end.time >= now.getHours());
+                console.log("end time:", time.end.time, now.getHours(), time.end.time <= now.getHours());
             }
 
-            if (time.end.time >= now.getHours()) {
+            if (time.end.time <= now.getHours()) {
 
                 if (config.state == "dev" || config.state == "stage") {
                     console.log("time:", time.end);
