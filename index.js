@@ -134,37 +134,58 @@ let timeVerify = (times) => {
             console.log("Is start and end same day?", todayStart && todayEnd ? true : false);
         }
 
-        if (todayStart && !todayEnd) {
 
-            if (config.state == "dev" || config.state == "stage") {
-                console.log("SCHEDULE START");
-                console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
-            }
-
-            if (now.getHours() >= time.start.time) {
-
-                if (config.state == "dev" || config.state == "stage") {
-                    console.log("time:", time.start);
+        if(todayStart) { //start of the schedule.
+            if(now.getHours() >= time.start.time && now.getHours() < time.end.time) {
+                if(config.state == "dev" || config.state == "stage") {
+                    console.log(time.start);
+                    console.log("SCHEDULE START", now.getDate());
                 }
-
                 return time.start;
             }
-        } else if (todayEnd) {
-
-            if (config.state == "dev" || config.state == "stage") {
-                console.log("SCHEDULE END");
-                console.log("end time:", time.end.time, now.getHours(), time.end.time <= now.getHours());
-            }
-
-            if (time.end.time <= now.getHours()) {
-
-                if (config.state == "dev" || config.state == "stage") {
-                    console.log("time:", time.end);
+        
+        } else if(todayEnd) { //end of the schedule.
+            if(now.getHours() >= time.end.time && now.getHours() > time.start.time) {
+                if(config.state == "dev" || config.state == "stage") {
+                    console.log(time.end);
+                    console.log("SCHEDULE END", now.getDate());
                 }
-
                 return time.end;
             }
         }
+
+
+        // if (todayStart && !todayEnd) {
+
+        //     if (config.state == "dev" || config.state == "stage") {
+        //         console.log("SCHEDULE START");
+        //         console.log("start time:", now.getHours(), time.start.time, time.start.time <= now.getHours());
+        //     }
+
+        //     if (now.getHours() >= time.start.time) {
+
+        //         if (config.state == "dev" || config.state == "stage") {
+        //             console.log("time:", time.start);
+        //         }
+
+        //         return time.start;
+        //     }
+        // } else if (todayEnd) {
+
+        //     if (config.state == "dev" || config.state == "stage") {
+        //         console.log("SCHEDULE END");
+        //         console.log("end time:", time.end.time, now.getHours(), time.end.time <= now.getHours());
+        //     }
+
+        //     if (time.end.time <= now.getHours()) {
+
+        //         if (config.state == "dev" || config.state == "stage") {
+        //             console.log("time:", time.end);
+        //         }
+
+        //         return time.end;
+        //     }
+        // }
     }
     return false; //did not match anything...
 };
